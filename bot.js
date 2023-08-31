@@ -79,6 +79,14 @@ client.on('error', error => {
 async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) {
     let lowerMsgBody = msgBody.toLowerCase();
 
+    // Generate emoji reaction based on the user's message
+    const reaction = await generateEmojiReaction(msgBody, openai);
+        
+    // React to the user's message with the generated emoji
+    if (reaction) {
+        await msg.react(reaction);
+    }
+
     // Get the quoted message, if any
     let quotedMessage = await msg.getQuotedMessage();
     let formattedMsgBody = msgBody;
@@ -175,6 +183,14 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "user", content: transcription.text });
         //console.log("User Session:", userSession); // Debugging line
 
+        // Generate emoji reaction based on the user's message
+        const reaction = await generateEmojiReaction(transcription.text, openai);
+            
+        // React to the user's message with the generated emoji
+        if (reaction) {
+            await msg.react(reaction);
+        }
+
         const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
         userSession = truncatedSession;
         userSession.push({ role: "assistant", content: gptResponse });
@@ -229,13 +245,6 @@ client.on('message', async msg => {
             userSession = await handleUnsupportedMedia(userSession, chatFilePath, media.mimetype, msg, chat);
         }
     } else if (msg.body) {
-        // Generate emoji reaction based on the user's message
-        const reaction = await generateEmojiReaction(msg.body, openai);
-        
-        // React to the user's message with the generated emoji
-        if (reaction) {
-            await msg.react(reaction);
-        }
         // Handle text messages
         userSession = await handleTextMessage(userSession, chatFilePath, msg.body, msg, chat);
     }
