@@ -1,10 +1,10 @@
-# GPT-4 WhatsApp Bot
+# GPT-4 Marvin WhatsApp Bot
 
-Welcome to the GPT-4 WhatsApp Bot! This bot leverages the power of OpenAI's GPT-4 model to provide advanced character prompts and responses. It's also integrated with Google's Text-to-Speech API for voice responses. 
+Welcome to the GPT-4 Marvin WhatsApp Bot! This bot leverages the power of OpenAI's GPT-4 model to provide advanced character prompts and responses. It's also integrated with Google's Text-to-Speech API for voice responses. 
 
 ## Features
 
-- Advanced character prompts using GPT-4
+- Advanced character prompts using GPT-4. Meet Marvin and Marta
 - Voice responses using Google's Text-to-Speech API
 - Easy to install and use
 
