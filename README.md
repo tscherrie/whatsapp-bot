@@ -27,12 +27,14 @@ Follow these steps to install and run the GPT-4 WhatsApp Bot:
     ```
     npm install
     ```
-4. Create a `.env` file in the root directory of the project and add your OpenAI and Google TTS API keys:
+4. Create a `.env` file in the root directory of the project and add your OpenAI, Google TTS API and crypto keys:
     ```
     OPENAI_API_KEY=your_openai_key
-    VOICE_API_KEY==your_google_tts_key
+    VOICE_API_KEY=your_google_tts_key
+    ENCRYPTION_KEY=random_32_byte_string
     ```
-    Replace `your_openai_key` and `your_google_tts_key` with your actual API keys.
+    Replace `your_openai_key` and `your_google_tts_key` with your actual API keys. 
+    Get a `random_32_byte_string` here: https://onlinetools.com/random/generate-random-string (just set length to 32)
 
 5. Run the bot:
     ```

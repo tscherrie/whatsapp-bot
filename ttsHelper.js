@@ -1,11 +1,16 @@
-import axios from 'axios';
+// Import utilities and configurations
 import { voiceApiKey } from './config.js';
+import axios from 'axios';
 import { franc } from 'franc-min';
 import whatsappWebJs from 'whatsapp-web.js';
 const { MessageMedia } = whatsappWebJs;
 
+function removeEmojis(text) {
+  return text.replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '')}
+
 export async function synthesizeAndSend(gptResponseText, msg) {
-    const langCode = franc(gptResponseText);
+    const cleanedText = removeEmojis(gptResponseText);  // Remove emojis
+    const langCode = franc(cleanedText);
     const voiceMap = {
         'eng': { languageCode: "en-GB", name: "en-GB-Standard-B", ssmlGender: "MALE" },
         //'eng': { languageCode: "en-GB", name: "en-GB-Neural2-A", ssmlGender: "FEMALE" },
@@ -38,7 +43,7 @@ export async function synthesizeAndSend(gptResponseText, msg) {
 
     const payload = {
         input: {
-            text: gptResponseText
+            text: cleanedText
         },
         voice: selectedVoice,
         audioConfig: {
@@ -48,7 +53,7 @@ export async function synthesizeAndSend(gptResponseText, msg) {
         }
     };
 
-    const url = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${voiceApiKey}`;
+    const url = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${process.env.VOICE_API_KEY}`;
     
     try {
         const { data } = await axios.post(url, payload, { headers: { 'Content-Type': 'application/json' } });

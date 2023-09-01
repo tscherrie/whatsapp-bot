@@ -80,14 +80,6 @@ client.on('error', error => {
 async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) {
     let lowerMsgBody = msgBody.toLowerCase();
 
-    // Generate emoji reaction based on the user's message
-    const reaction = await generateEmojiReaction(msgBody, openai);
-        
-    // React to the user's message with the generated emoji
-    if (reaction) {
-        await msg.react(reaction);
-    }
-
     // Get the quoted message, if any
     let quotedMessage = await msg.getQuotedMessage();
     let formattedMsgBody = msgBody;
@@ -109,6 +101,14 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     }
 
     userSession.push({ role: "user", content: formattedMsgBody });
+
+    // Generate emoji reaction based on the user's message
+    const reaction = await generateEmojiReaction(msgBody, openai);
+        
+    // React to the user's message with the generated emoji
+    if (reaction) {
+        await msg.react(reaction);
+    }
 
     let gptResponse = "";
     await new Promise((resolve, reject) => {
@@ -176,7 +176,6 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
     const readableStream = createReadStream(tempFilePath);
 
     try {
-        await chat.sendStateRecording();
         const transcription = await openai.audio.transcriptions.create({
             file: readableStream,
             model: "whisper-1"
@@ -191,12 +190,14 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         if (reaction) {
             await msg.react(reaction);
         }
-
+        
+        await chat.sendStateRecording();
+        // Send the transcription to GPT-4
         const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
         userSession = truncatedSession;
         userSession.push({ role: "assistant", content: gptResponse });
 
-        // Synthesize and send voice message
+        // Synthesize the GPT response and send voice message
         await synthesizeAndSend(gptResponse, msg);
 
     } catch (error) {
@@ -233,6 +234,20 @@ client.on('message', async msg => {
     
     // Initialize user session
     let userSession = readJSONFile(chatFilePath) || [{ role: "system", content: systemMessage }];
+
+    // Ask for consent if this is the first message from the user
+    if (userSession.length === 0 || (userSession.length === 1 && userSession[0].role === "user")) {
+        const consent = msg.body.toLowerCase();
+        if (consent === 'yes') {
+            // Add system message to the empty userSession
+            userSession.unshift({ role: "system", content: systemMessage });
+            writeJSONFile(chatFilePath, userSession); // Save the initialized userSession to JSON
+            client.sendMessage(msg.from, "Thank you for your consent. Let's continue.");
+        } else {
+            client.sendMessage(msg.from, "Hi. Marvin team here. We need your consent to store your chat history to enable this service. We will encrypt and never give away your data to anyone and delete 90 days after your last chat interaction. Do you agree? (yes/no)");
+        }
+        return;
+    }
 
     if (msg.hasMedia) {
         // Handle media messages
