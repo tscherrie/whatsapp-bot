@@ -314,8 +314,8 @@ setInterval(async () => {
         // Calculate the difference in days between now and the last modified time
         const differenceInDays = (now - mtime) / (1000 * 60 * 60 * 24);
   
-        // Generate a random number between 5 and 15
-        const randomDays = Math.floor(Math.random() * 11) + 5;
+        // Generate a random number between 3 and 14
+        const randomDays = Math.floor(Math.random() * 12) + 3;
   
         // Only send Marvin's message if the last modified time is greater than the random number of days
         if (differenceInDays > randomDays) {

@@ -5,7 +5,10 @@ Welcome to the GPT-4 Marvin WhatsApp Bot! This bot leverages the power of OpenAI
 ## Features
 
 - Advanced character prompts using GPT-4. Meet Marvin and Marta
-- Voice responses using Google's Text-to-Speech API
+- Voice responses/messages using Google's Text-to-Speech API
+- Bots use reactions, emojis
+- They understand quoted messages
+- They actively say hi every now and then
 - Easy to install and use
 
 ## Installation
@@ -27,7 +30,7 @@ Follow these steps to install and run the GPT-4 WhatsApp Bot:
 4. Create a `.env` file in the root directory of the project and add your OpenAI and Google TTS API keys:
     ```
     OPENAI_API_KEY=your_openai_key
-    GOOGLE_TTS_API_KEY=your_google_tts_key
+    VOICE_API_KEY==your_google_tts_key
     ```
     Replace `your_openai_key` and `your_google_tts_key` with your actual API keys.
 
