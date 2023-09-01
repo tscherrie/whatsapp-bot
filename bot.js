@@ -1,6 +1,6 @@
 // Import utilities and configurations
-import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile } from './utils.js';
-import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey, voiceApiKey } from './config.js';
+import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from './utils.js';
+import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from './config.js';
 import { manageTokensAndGenerateResponse, generateEmojiReaction } from './openaiHelper.js';
 import { synthesizeAndSend } from './ttsHelper.js';
 import { updateSystemMessage } from './commands.js';
@@ -256,5 +256,76 @@ client.on('message', async msg => {
     writeJSONFile(chatFilePath, userSession);
     await chat.sendSeen();
 });
+
+
+async function sendMarvinsMessage(chatId) {
+    const prompt = `Script update: You didn't hear from each other for several days and you decided to say hi with a very short message based on your previous conversations.`;
+
+    // Load the chat session to get the pushName or any other details
+    const userSession = readJSONFile(`chats/${chatId}.json`);
+
+    // Prepare the message input for GPT-4
+    let messageInput = userSession || [];
+    messageInput.push({ role: "user", content: prompt });
+
+    let gptResponse = "";
+
+    // Call the GPT-4 model
+    await new Promise((resolve, reject) => {
+        fetchStreamedChatContent({
+            apiKey: openaiAPIKey,
+            messageInput: messageInput,
+            model: "gpt-4",
+            retryCount: 7,
+            fetchTimeout: 70000,
+            readTimeout: 30000,
+            totalTime: 1200000
+        }, async (content) => {
+            gptResponse += content;
+        }, () => {
+            resolve();
+        }, (error) => {
+            console.error('Error:', error);
+            reject(error);
+        });
+    });
+
+    // Send the message using WhatsApp API
+    client.sendMessage(chatId, gptResponse);
+}
+
+
+
+  
+// The interval function
+setInterval(async () => {
+    const chatIds = getAllChatIds(); // Get all chat IDs
+    
+    for (const chatId of chatIds) {
+        // Define the path to the chat session JSON file
+        const chatFilePath = `chats/${chatId}.json`;
+  
+        // Get file stats to find the last modified time
+        const stats = fs.statSync(chatFilePath);
+        const mtime = new Date(stats.mtime);
+        const now = new Date();
+  
+        // Calculate the difference in days between now and the last modified time
+        const differenceInDays = (now - mtime) / (1000 * 60 * 60 * 24);
+  
+        // Generate a random number between 5 and 15
+        const randomDays = Math.floor(Math.random() * 11) + 5;
+  
+        // Only send Marvin's message if the last modified time is greater than the random number of days
+        if (differenceInDays > randomDays) {
+            // Send Marvin's message
+            await sendMarvinsMessage(chatId);
+        }
+    }
+    
+  }, 18 * 60 * 60 * 1000); // 18 hours
+
+
+
 
 client.initialize();

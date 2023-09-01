@@ -1,5 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { CHATS_DIR } from './config.js';
+
+
 
 export function ensureDirectoryExistence(dirPath) {
     if (!fs.existsSync(dirPath)) {
@@ -38,3 +41,21 @@ export function createReadStream(filePath) {
 export function deleteFile(filePath) {
     fs.unlinkSync(filePath);
 }
+
+export function getAllChatIds() {
+    const chatIds = [];
+  
+    // Read the directory
+    const files = fs.readdirSync(CHATS_DIR);
+  
+    // Loop through each file and check if it's a .json file
+    for (const file of files) {
+      if (path.extname(file) === '.json') {
+        // Remove the '.json' extension to get the chat ID
+        const chatId = path.basename(file, '.json');
+        chatIds.push(chatId);
+      }
+    }
+  
+    return chatIds;
+  }
