@@ -6,7 +6,6 @@ import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from './config.js';
 import { manageTokensAndGenerateResponse, generateEmojiReaction } from './openaiHelper.js';
 import { synthesizeAndSend } from './ttsHelper.js';
 import { updateSystemMessage } from './commands.js';
-
 import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 
 // Import other libraries
