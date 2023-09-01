@@ -77,6 +77,7 @@ client.on('error', error => {
 
 
 // Message handlers
+// Handle text messages
 async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) {
     let lowerMsgBody = msgBody.toLowerCase();
 
@@ -101,14 +102,6 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     }
 
     userSession.push({ role: "user", content: formattedMsgBody });
-
-    // Generate emoji reaction based on the user's message
-    const reaction = await generateEmojiReaction(msgBody, openai);
-        
-    // React to the user's message with the generated emoji
-    if (reaction) {
-        await msg.react(reaction);
-    }
 
     let gptResponse = "";
     await new Promise((resolve, reject) => {
@@ -150,6 +143,13 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
         userSession.push({ role: "assistant", content: gptResponse });
     }
 
+    // Generate emoji reaction based on the user's message
+    const reaction = await generateEmojiReaction(msgBody, openai); 
+    // React to the user's message with the generated emoji
+    if (reaction) {
+        await msg.react(reaction);
+    }
+
     return userSession;
 }
 
@@ -182,14 +182,6 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         });
         userSession.push({ role: "user", content: transcription.text });
         //console.log("User Session:", userSession); // Debugging line
-
-        // Generate emoji reaction based on the user's message
-        const reaction = await generateEmojiReaction(transcription.text, openai);
-            
-        // React to the user's message with the generated emoji
-        if (reaction) {
-            await msg.react(reaction);
-        }
         
         await chat.sendStateRecording();
         // Send the transcription to GPT-4
@@ -199,6 +191,13 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
 
         // Synthesize the GPT response and send voice message
         await synthesizeAndSend(gptResponse, msg);
+
+        // Generate emoji reaction based on the user's message
+        const reaction = await generateEmojiReaction(transcription.text, openai);  
+        // React to the user's message with the generated emoji
+        if (reaction) {
+            await msg.react(reaction);
+        }
 
     } catch (error) {
         console.error("Transcription Error:", error);
