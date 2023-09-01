@@ -1,4 +1,6 @@
 // Import utilities and configurations
+import dotenv from 'dotenv';
+dotenv.config();
 import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from './utils.js';
 import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from './config.js';
 import { manageTokensAndGenerateResponse, generateEmojiReaction } from './openaiHelper.js';
