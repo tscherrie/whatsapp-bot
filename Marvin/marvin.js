@@ -190,7 +190,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "assistant", content: gptResponse });
 
         // Synthesize the GPT response and send voice message
-        await synthesizeAndSend(gptResponse, msg);
+        await synthesizeAndSend(gptResponse, msg, "Marvin");
 
         // Generate emoji reaction based on the user's message
         const reaction = await generateEmojiReaction(transcription.text, openai);  
