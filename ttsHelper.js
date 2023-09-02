@@ -26,7 +26,7 @@ function removeEmojis(text) {
         audioConfig: {
             audioEncoding: "OGG_OPUS",
             speakingRate: 1,
-            pitch: 0
+            pitch: 5
         }
     };
 
