@@ -259,7 +259,7 @@ client.on('message', async msg => {
             writeJSONFile(chatFilePath, userSession); // Save the initialized userSession to JSON
             client.sendMessage(msg.from, "Thank you for your consent. Let's continue.");
         } else {
-            client.sendMessage(msg.from, "Hi. Marvin team here. We need your consent to store your chat history to enable this service. We will encrypt and never give away your data to anyone and delete 90 days after your last chat interaction. Do you agree? (yes/no)");
+            client.sendMessage(msg.from, "Hi there. We need your consent to store your chat history to enable this service. We will encrypt and never give away your data to anyone and delete it 30 days after your last chat interaction. Do you agree? (yes/no)");
         }
         return;
     }
