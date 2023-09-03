@@ -1,4 +1,4 @@
-import { getMarvinMessage, getSonnenscheinMessage } from './config.js';
+import { getMarvinMessage, getMartaMessage } from './config.js';
 
 // Function to update the system message based on the user's command
 export async function updateSystemMessage(userSession, client, msg, command, chat) {  // Added chat parameter
@@ -12,7 +12,7 @@ export async function updateSystemMessage(userSession, client, msg, command, cha
     } else if (command.includes("ohne") || command.includes("without") || command.includes("no") || command.includes("none") || command.includes("nein") || command.includes("kein") || command.includes("keiner") || command === "") {
         newMessage = "";  // No system message for 'Ohne'
     } else if (command.includes("sonnenschein") || command.includes("marta") || command.includes("sonne") || command.includes("sun") || command.includes("sunshine")) {
-        newMessage = getSonnenscheinMessage(pushName);
+        newMessage = getMartaMessage(pushName);
     } else {
         client.sendMessage(msg.from, `Wrong command. System message not updated. Use "character: Marvin" or "character: Marta" or "character: Ohne"`);
         return userSession;  // Invalid command
