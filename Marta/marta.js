@@ -230,6 +230,17 @@ client.on('message', async msg => {
     //console.log("Chat File Path:", chatFilePath); // Debugging line
 
     const chat = await msg.getChat();
+
+    // Check if the chat is a group chat
+    if (chat.isGroup) {
+        // Check if the bot is mentioned in the message
+        const botId = `16082396824@c.us`; // Replace with your bot's WhatsApp ID
+        if (!msg.mentionedIds.includes(botId)) {
+            // If bot is not mentioned, don't respond and exit the function
+            console.log('Bot not mentioned in group chat. Ignoring.');
+            return;
+        }
+    }
     
     // Initialize user session
     let userSession = readJSONFile(chatFilePath) || [{ role: "system", content: systemMessage }];
