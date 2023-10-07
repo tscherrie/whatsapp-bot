@@ -104,6 +104,7 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     // Call manageTokensAndGenerateResponse with streaming set to true
     await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+        chat.sendStateTyping();  // Show typing state for each paragraph
         if (paragraph.trim() !== '') {
             await chat.sendStateTyping();  // Show typing state for each paragraph
             client.sendMessage(msg.from, paragraph);
