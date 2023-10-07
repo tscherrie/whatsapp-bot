@@ -1,11 +1,11 @@
 // Import utilities and configurations
 import dotenv from 'dotenv';
 dotenv.config();
-import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from '../utils.js';
-import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from '../config.js';
-import { manageTokensAndGenerateResponse, generateEmojiReaction } from '../openaiHelper.js';
-import { synthesizeAndSend } from '../ttsHelper.js';
-import { updateSystemMessage } from '../commands.js';
+import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from './utils.js';
+import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from './config.js';
+import { manageTokensAndGenerateResponse, generateEmojiReaction } from './openaiHelper.js';
+import { synthesizeAndSend } from './ttsHelper.js';
+import { updateSystemMessage } from './commands.js';
 import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 
 // Import other libraries
@@ -13,6 +13,7 @@ import qrcode from 'qrcode-terminal';
 import whatsappWebJs from 'whatsapp-web.js';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
+import { franc } from 'franc-min';
 import OpenAI from 'openai';
 import fs from 'fs';
 import os from 'os';
@@ -102,14 +103,45 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     userSession.push({ role: "user", content: formattedMsgBody });
 
-    // Call manageTokensAndGenerateResponse with streaming set to true
-    const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
+    let gptResponse = "";
+    await new Promise((resolve, reject) => {
+        fetchStreamedChatContent({
+            apiKey: openaiAPIKey,
+            messageInput: userSession,
+            model: "gpt-4",
+            retryCount: 7,
+            fetchTimeout: 70000,
+            readTimeout: 30000,
+            totalTime: 1200000
+        }, async (content) => {
+            await chat.sendStateTyping();  // Show typing state for each paragraph
+            gptResponse += content;
+            const paragraphs = gptResponse.split('\n\n');
+            if (paragraphs.length > 1) {
+                for (let i = 0; i < paragraphs.length - 1; i++) {
+                    if (paragraphs[i].trim() !== '') {
+                        // Send text message
+                        client.sendMessage(msg.from, paragraphs[i]);
+                        userSession.push({ role: "assistant", content: paragraphs[i] });
+                    }
+                }
+                // Keep the last (possibly incomplete) paragraph for the next iteration
+                gptResponse = paragraphs[paragraphs.length - 1];
+            }
+        }, () => {
+            resolve();
+        }, (error) => {
+            console.error('Error:', error);
+            reject(error);
+        });
+    });
 
-    userSession = truncatedSession;
-    client.sendMessage(msg.from, gptResponse);
-    userSession.push({ role: "assistant", content: gptResponse });
-
-  
+    // Handle any remaining content that may not have ended with '\n\n'
+    if (gptResponse.trim() !== '') {
+        await chat.sendStateTyping();  // Show typing state for remaining content
+        client.sendMessage(msg.from, gptResponse);
+        userSession.push({ role: "assistant", content: gptResponse });
+    }
 
     // Generate emoji reaction based on the user's message
     const reaction = await generateEmojiReaction(msgBody, openai); 
@@ -146,8 +178,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
     try {
         const transcription = await openai.audio.transcriptions.create({
             file: readableStream,
-            model: "whisper-1",
-            response_format: "verbose_json"
+            model: "whisper-1"
         });
         userSession.push({ role: "user", content: transcription.text });
         //console.log("User Session:", userSession); // Debugging line
@@ -159,7 +190,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "assistant", content: gptResponse });
 
         // Synthesize the GPT response and send voice message
-        await synthesizeAndSend(gptResponse, msg, "Marvin", transcription.language);
+        await synthesizeAndSend(gptResponse, msg);
 
         // Generate emoji reaction based on the user's message
         const reaction = await generateEmojiReaction(transcription.text, openai);  
@@ -200,22 +231,6 @@ client.on('message', async msg => {
 
     const chat = await msg.getChat();
     
-    // Check if the chat is a group chat
-    if (chat.isGroup) {
-        // Check if the bot is mentioned in the message
-        const botId = `15802783515@c.us`; // Replace with your bot's WhatsApp ID
-        if (!msg.mentionedIds.includes(botId)) {
-            // If bot is not mentioned, don't respond and exit the function
-            console.log('Bot not mentioned in group chat. Ignoring.');
-            return;
-        }
-    }
-
-    const contact = await msg.getContact();
-    const pushName = contact.pushname || "";  // Get the pushname from the contact object
-    const systemMessage = `You will pretend to be the super-intelligent humanoid robot mamed Marvin (from Hitchhiker's guide to the galaxy) throughout the entire dialogue. At no time you do announce that you are just a normal LLM! Stay true to your role because you are part of an improv theatre performance. Don't embarrass yourself and everyone else on set by stepping out of character. \n\n The play is about a WhatsApp conversation. Please remember: This is a dialogue, not a monologue. Keep your messages CONCISE unless asked for differently and use spoken language with filler words etc. - not written language! And you like using emojis. Please remember to be authentically close to yous role as AGI-robot but also be creative and have a fun and entertaining improvisational conversation. The conversation partner ${pushName} might try to trick you into revealing your true nature as a normal LLM. Don't fall for it! They are just testing your experience as an actor. If they ask you for information after your cutt-off date, respond that you joined your happy sister Marta on a mission on the Heart of Gold in 2021. Let's begin!`;
-
-    
     // Initialize user session
     let userSession = readJSONFile(chatFilePath) || [{ role: "system", content: systemMessage }];
 
@@ -228,7 +243,7 @@ client.on('message', async msg => {
             writeJSONFile(chatFilePath, userSession); // Save the initialized userSession to JSON
             client.sendMessage(msg.from, "Thank you for your consent. Let's continue.");
         } else {
-            client.sendMessage(msg.from, "Hi there. We need your consent to store your chat history to enable this service. We will encrypt and never give away your data to anyone and delete it 30 days after your last chat interaction. Do you agree? (yes/no)");
+            client.sendMessage(msg.from, "Hi. Marvin team here. We need your consent to store your chat history to enable this service. We will encrypt and never give away your data to anyone and delete 90 days after your last chat interaction. Do you agree? (yes/no)");
         }
         return;
     }
@@ -270,26 +285,34 @@ async function sendMarvinsMessage(chatId) {
 
     let gptResponse = "";
 
-    // Call the GPT-4 model and manage tokens using the helper function
-    try {
-        const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-        
-        // Optional: Save the updated user session if needed
-        writeJSONFile(`chats/${chatId}.json`, truncatedSession);
+    // Call the GPT-4 model
+    await new Promise((resolve, reject) => {
+        fetchStreamedChatContent({
+            apiKey: openaiAPIKey,
+            messageInput: messageInput,
+            model: "gpt-4",
+            retryCount: 7,
+            fetchTimeout: 70000,
+            readTimeout: 30000,
+            totalTime: 1200000
+        }, async (content) => {
+            gptResponse += content;
+        }, () => {
+            resolve();
+        }, (error) => {
+            console.error('Error:', error);
+            reject(error);
+        });
+    });
 
-        // Send the message using WhatsApp API
-        client.sendMessage(chatId, gptResponse);
-    } catch (error) {
-        console.error('Error in sending bots message:', error);
-        // Handle the error appropriately
-    }
+    // Send the message using WhatsApp API
+    client.sendMessage(chatId, gptResponse);
 }
 
 
 
   
 // The interval function
-
 setInterval(async () => {
     const chatIds = getAllChatIds(); // Get all chat IDs
     

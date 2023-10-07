@@ -36,7 +36,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
     }
 
     enc.free();
-
+    let gptResponse = "";
     await new Promise((resolve, reject) => {
         fetchStreamedChatContent({
             apiKey: openaiAPIKey,
@@ -47,13 +47,14 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            let gptResponse = "";
+            
             gptResponse += content;
             const paragraphs = gptResponse.split('\n\n');
             if (paragraphs.length > 1) {
                 for (let i = 0; i < paragraphs.length - 1; i++) {
                     if (paragraphs[i].trim() !== '') {
                         callback(paragraphs[i]); // Handle each paragraph
+                        console.log("Paragraph:", paragraphs[i]);
                     }
                 }
                 // Keep the last (possibly incomplete) paragraph for the next iteration
