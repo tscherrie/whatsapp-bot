@@ -102,38 +102,10 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     userSession.push({ role: "user", content: formattedMsgBody });
 
-    let gptResponse = "";
-    await new Promise((resolve, reject) => {
-        fetchStreamedChatContent({
-            apiKey: openaiAPIKey,
-            messageInput: userSession,
-            model: "gpt-4",
-            retryCount: 7,
-            fetchTimeout: 70000,
-            readTimeout: 30000,
-            totalTime: 1200000
-        }, async (content) => {
-            await chat.sendStateTyping();  // Show typing state for each paragraph
-            gptResponse += content;
-            const paragraphs = gptResponse.split('\n\n');
-            if (paragraphs.length > 1) {
-                for (let i = 0; i < paragraphs.length - 1; i++) {
-                    if (paragraphs[i].trim() !== '') {
-                        // Send text message
-                        client.sendMessage(msg.from, paragraphs[i]);
-                        userSession.push({ role: "assistant", content: paragraphs[i] });
-                    }
-                }
-                // Keep the last (possibly incomplete) paragraph for the next iteration
-                gptResponse = paragraphs[paragraphs.length - 1];
-            }
-        }, () => {
-            resolve();
-        }, (error) => {
-            console.error('Error:', error);
-            reject(error);
-        });
-    });
+     // Call manageTokensAndGenerateResponse with streaming set to true
+     const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession, true);
+
+     userSession = truncatedSession;
 
     // Handle any remaining content that may not have ended with '\n\n'
     if (gptResponse.trim() !== '') {
