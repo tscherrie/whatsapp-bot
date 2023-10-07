@@ -100,46 +100,15 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     userSession.push({ role: "user", content: formattedMsgBody });
 
-    let gptResponse = "";
-    await new Promise((resolve, reject) => {
-        fetchStreamedChatContent({
-            apiKey: openaiAPIKey,
-            messageInput: userSession,
-            model: "gpt-4",
-            retryCount: 7,
-            fetchTimeout: 70000,
-            readTimeout: 30000,
-            totalTime: 1200000
-        }, async (content) => {
+    // Call manageTokensAndGenerateResponse with streaming
+    await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
+        if (paragraph.trim() !== '') {
             await chat.sendStateTyping();  // Show typing state for each paragraph
-            gptResponse += content;
-            const paragraphs = gptResponse.split('\n\n');
-            if (paragraphs.length > 1) {
-                for (let i = 0; i < paragraphs.length - 1; i++) {
-                    if (paragraphs[i].trim() !== '') {
-                        // Send text message
-                        client.sendMessage(msg.from, paragraphs[i]);
-                        userSession.push({ role: "assistant", content: paragraphs[i] });
-                    }
-                }
-                // Keep the last (possibly incomplete) paragraph for the next iteration
-                gptResponse = paragraphs[paragraphs.length - 1];
-            }
-        }, () => {
-            resolve();
-        }, (error) => {
-            console.error('Error:', error);
-            reject(error);
-        });
+            client.sendMessage(msg.from, paragraph);
+            userSession.push({ role: "assistant", content: paragraph });
+        }
     });
-
-    // Handle any remaining content that may not have ended with '\n\n'
-    if (gptResponse.trim() !== '') {
-        await chat.sendStateTyping();  // Show typing state for remaining content
-        client.sendMessage(msg.from, gptResponse);
-        userSession.push({ role: "assistant", content: gptResponse });
-    }
-
+  
     // Generate emoji reaction based on the user's message
     const reaction = await generateEmojiReaction(msgBody, openai); 
     // React to the user's message with the generated emoji
@@ -161,10 +130,14 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "user", content: "You've got a very long voice message - too long for you to not fall asleep." });
         //console.log("User Session:", userSession); // Debugging line
 
-        const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-        userSession = truncatedSession;
-        userSession.push({ role: "assistant", content: gptResponse });
-        client.sendMessage(msg.from, gptResponse);
+        // Call manageTokensAndGenerateResponse with streaming
+        await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
+            if (paragraph.trim() !== '') {
+                await chat.sendStateTyping();  // Show typing state for each paragraph
+                client.sendMessage(msg.from, paragraph);
+                userSession.push({ role: "assistant", content: paragraph });
+            }
+        });
         return;
     }
 
@@ -181,11 +154,15 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "user", content: transcription.text });
         //console.log("User Session:", userSession); // Debugging line
         
+        let gptResponse = "";
         await chat.sendStateRecording();
-        // Send the transcription to GPT-4
-        const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-        userSession = truncatedSession;
-        userSession.push({ role: "assistant", content: gptResponse });
+        // Call manageTokensAndGenerateResponse with streaming
+        await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+            if (paragraph.trim() !== '') {
+                gptResponse += paragraph;
+                userSession.push({ role: "assistant", content: paragraph });
+            }
+        });
 
         // Synthesize the GPT response and send voice message
         await synthesizeAndSend(gptResponse, msg, "Marta", transcription.language);
@@ -211,9 +188,16 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
 // Handle unsupported media types
 async function handleUnsupportedMedia(userSession, chatFilePath, mimeType, msg, chat) {
     userSession.push({ role: "user", content: `You pretend to understand text and voice messages but you got a ${mimeType} file.` });
-    const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-    userSession = truncatedSession;
-    userSession.push({ role: "assistant", content: gptResponse });
+    
+    // Call manageTokensAndGenerateResponse with streaming
+    await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
+        if (paragraph.trim() !== '') {
+            await chat.sendStateTyping();  // Show typing state for each paragraph
+            client.sendMessage(msg.from, paragraph);
+            userSession.push({ role: "assistant", content: paragraph });
+        }
+    });
+
     //console.log("User Session:", userSession); // Debugging line
     await chat.sendStateTyping();
     client.sendMessage(msg.from, gptResponse);
@@ -300,13 +284,15 @@ async function sendMarvinsMessage(chatId) {
 
     // Call the GPT-4 model and manage tokens using the helper function
     try {
-        const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
+        // Call manageTokensAndGenerateResponse with streaming
+        await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+            if (paragraph.trim() !== '') {
+                await chat.sendStateTyping();  // Show typing state for each paragraph
+                client.sendMessage(msg.from, paragraph);
+                userSession.push({ role: "assistant", content: paragraph });
+            }
+        });
         
-        // Optional: Save the updated user session if needed
-        writeJSONFile(`chats/${chatId}.json`, truncatedSession);
-
-        // Send the message using WhatsApp API
-        client.sendMessage(chatId, gptResponse);
     } catch (error) {
         console.error('Error in sending bots message:', error);
         // Handle the error appropriately

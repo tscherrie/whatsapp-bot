@@ -159,7 +159,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         let gptResponse = "";
         await chat.sendStateRecording();
         // Call manageTokensAndGenerateResponse with streaming
-        await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
+        await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
             if (paragraph.trim() !== '') {
                 gptResponse += paragraph;
                 userSession.push({ role: "assistant", content: paragraph });
