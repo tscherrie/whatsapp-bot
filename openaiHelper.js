@@ -2,7 +2,7 @@ import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 import { encoding_for_model } from "tiktoken";
 import { MAX_TOKENS, openaiAPIKey } from './config.js';
 
-export async function manageTokensAndGenerateResponse(openai, userSession, chat, callback) {
+export async function manageTokensAndGenerateResponse(openai, userSession, chat=null, callback) {
     if (!userSession) {
         console.error("userSession is undefined.");
         callback('An internal error occurred.'); // Notify through callback
@@ -47,7 +47,9 @@ export async function manageTokensAndGenerateResponse(openai, userSession, chat,
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            await chat.sendStateTyping();  // Show typing state for each paragraph
+            if (chat !== null) {
+                await chat.sendStateTyping();  // Show typing state for each paragraph
+            }
             gptResponse += content;
             const paragraphs = gptResponse.split('\n\n');
             if (paragraphs.length > 1) {
