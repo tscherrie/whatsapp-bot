@@ -1,6 +1,6 @@
 export const SESSION_FILE_PATH = './session.json';
 export const CHATS_DIR = './chats';
-export const MAX_TOKENS = 4000;
+export const MAX_TOKENS = 7000;
 export const openaiAPIKey = process.env.OPENAI_API_KEY;
 export const voiceApiKey = process.env.VOICE_API_KEY;
 

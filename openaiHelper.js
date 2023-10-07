@@ -1,3 +1,4 @@
+import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 import { encoding_for_model } from "tiktoken";
 import { MAX_TOKENS, openaiAPIKey } from './config.js';
 
@@ -41,13 +42,35 @@ export async function manageTokensAndGenerateResponse(openai, userSession) {
 
     enc.free();
 
-    const completion = await openai.chat.completions.create({
-        messages: truncatedSession,
-        model: "gpt-4",
+    // Create a messageInput for fetchStreamedChatContent
+    const messageInput = {
+        messages: truncatedSession
+    };
+
+    let gptResponse = '';
+
+    // Call the GPT-4 model using fetchStreamedChatContent
+    await new Promise((resolve, reject) => {
+        fetchStreamedChatContent({
+            apiKey: openaiAPIKey,
+            messageInput: messageInput,
+            model: "gpt-4",
+            retryCount: 7,
+            fetchTimeout: 70000,
+            readTimeout: 30000,
+            totalTime: 1200000
+        }, async (content) => {
+            gptResponse += content;
+        }, () => {
+            resolve();
+        }, (error) => {
+            console.error('Error:', error);
+            reject(error);
+        });
     });
 
     return {
-        gptResponse: completion.choices[0].message.content,
+        gptResponse: gptResponse,
         truncatedSession: truncatedSession
     };
 }
