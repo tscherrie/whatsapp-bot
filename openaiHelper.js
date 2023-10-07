@@ -3,13 +3,10 @@ import { encoding_for_model } from "tiktoken";
 import { MAX_TOKENS, openaiAPIKey } from './config.js';
 
 export async function manageTokensAndGenerateResponse(openai, userSession, callback) {
-    // Check if userSession is undefined or null
     if (!userSession) {
         console.error("userSession is undefined.");
-        return {
-            gptResponse: 'An internal error occurred.',
-            truncatedSession: []
-        };
+        callback('An internal error occurred.'); // Notify through callback
+        return;
     }
 
     let totalTokens = 0;
@@ -22,10 +19,8 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
 
         if (tokens > MAX_TOKENS) {
             console.error(`A single message exceeded the maximum token limit: ${tokens} tokens`);
-            return {
-                gptResponse: 'Sorry, your message is too long for me to process.',
-                truncatedSession: truncatedSession
-            };
+            callback('Sorry, your message is too long for me to process.'); // Notify through callback
+            return;
         }
 
         if (totalTokens + tokens > MAX_TOKENS) {
@@ -42,9 +37,6 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
 
     enc.free();
 
-    let gptResponse = '';
-
-    // Call the GPT-4 model using fetchStreamedChatContent
     await new Promise((resolve, reject) => {
         fetchStreamedChatContent({
             apiKey: openaiAPIKey,
@@ -55,17 +47,12 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            gptResponse += content;
-            let paragraphs = gptResponse.split('\n\n');
-            for (let i = 0; i < paragraphs.length - 1; i++) {
-                if (paragraphs[i].trim() !== '') {
-                    // Assuming you have some callback function to handle each paragraph
-                    // This should send a message and update the user session
-                    callback(paragraphs[i]);
+            let paragraphs = content.split('\n\n');
+            for (let paragraph of paragraphs) {
+                if (paragraph.trim() !== '') {
+                    callback(paragraph); // Handle each paragraph
                 }
             }
-            // Keep the last (possibly incomplete) paragraph for the next iteration
-            gptResponse = paragraphs[paragraphs.length - 1];
         }, () => {
             resolve();
         }, (error) => {
@@ -73,13 +60,8 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             reject(error);
         });
     });
-    
-
-    return {
-        gptResponse: gptResponse,
-        truncatedSession: truncatedSession
-    };
 }
+
 
 export async function generateEmojiReaction(message, openai) {
     const prompt = `If the following message is emotional, what would be an appropriate emoji reaction? If the message isn't emotional, respond with "No Emoji". \nMessage: "${message}"`;
