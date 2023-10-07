@@ -75,6 +75,9 @@ export async function manageTokensAndGenerateResponse(openai, userSession, chat=
     
     // Handle any remaining content that may not have ended with '\n\n'
     if (gptResponse && gptResponse.trim() !== '') {
+        if (gptResponse.includes(']: ')) {
+            gptResponse = gptResponse.split(']: ')[1];
+        }
         callback(gptResponse); // Handle the remaining content
     }
     
