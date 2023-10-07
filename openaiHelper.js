@@ -56,7 +56,6 @@ export async function manageTokensAndGenerateResponse(openai, userSession, strea
             totalTime: 1200000
         }, async (content) => {
             if (streaming) {
-                await chat.sendStateTyping();  // Show typing state for each paragraph
                 gptResponse += content;
                 const paragraphs = gptResponse.split('\n\n');
                 if (paragraphs.length > 1) {

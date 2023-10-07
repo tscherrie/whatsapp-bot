@@ -104,6 +104,7 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
      // Call manageTokensAndGenerateResponse with streaming set to true
      const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession, true);
+     await chat.sendStateTyping();  // Show typing state for each paragraph
 
      userSession = truncatedSession;
 
