@@ -182,7 +182,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
             response_format: "verbose_json"
         });
         userSession.push({ role: "user", content: transcription.text });
-        console.log("User Session:", userSession); // Debugging line
+        //console.log("User Session:", userSession); // Debugging line
         
         await chat.sendStateRecording();
         // Send the transcription to GPT-4
