@@ -2,7 +2,7 @@ import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 import { encoding_for_model } from "tiktoken";
 import { MAX_TOKENS, openaiAPIKey } from './config.js';
 
-export async function manageTokensAndGenerateResponse(openai, userSession, streaming = false) {
+export async function manageTokensAndGenerateResponse(openai, userSession, callback) {
     // Check if userSession is undefined or null
     if (!userSession) {
         console.error("userSession is undefined.");
@@ -55,23 +55,14 @@ export async function manageTokensAndGenerateResponse(openai, userSession, strea
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            if (streaming) {
-                gptResponse += content;
-                const paragraphs = gptResponse.split('\n\n');
-                if (paragraphs.length > 1) {
-                    for (let i = 0; i < paragraphs.length - 1; i++) {
-                        if (paragraphs[i].trim() !== '') {
-                            // Send text message
-                            client.sendMessage(msg.from, paragraphs[i]);
-                            userSession.push({ role: "assistant", content: paragraphs[i] });
-                        }
-                    }
-                    // Keep the last (possibly incomplete) paragraph for the next iteration
-                    gptResponse = paragraphs[paragraphs.length - 1];
+            gptResponse += content;
+            const paragraphs = gptResponse.split('\n\n');
+            for (let paragraph of paragraphs) {
+                if (paragraph.trim() !== '') {
+                    callback(paragraph); // Send each paragraph back to the calling code
                 }
-            } else {
-                gptResponse += content;
             }
+            gptResponse = ''; // Reset gptResponse since we've already handled these paragraphs
         }, () => {
             resolve();
         }, (error) => {

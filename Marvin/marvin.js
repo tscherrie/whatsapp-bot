@@ -85,7 +85,6 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     let formattedMsgBody = msgBody;
     if (quotedMessage) {
         formattedMsgBody = `${msgBody}  - in reply to: '${quotedMessage.body}'`;
-        //formattedMsgBody = `Quoted message: [${quotedMessage.body}] \n\nReply: ${msgBody}`;
     }
 
     if (userSession.length > 0 && (lowerMsgBody.startsWith("charakter:") || lowerMsgBody.startsWith("charakter") || lowerMsgBody.startsWith("character:") || lowerMsgBody.startsWith("character"))) {
@@ -102,18 +101,14 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     userSession.push({ role: "user", content: formattedMsgBody });
 
-     // Call manageTokensAndGenerateResponse with streaming set to true
-     const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession, true);
-     await chat.sendStateTyping();  // Show typing state for each paragraph
-
-     userSession = truncatedSession;
-
-    // Handle any remaining content that may not have ended with '\n\n'
-    if (gptResponse.trim() !== '') {
-        await chat.sendStateTyping();  // Show typing state for remaining content
-        client.sendMessage(msg.from, gptResponse);
-        userSession.push({ role: "assistant", content: gptResponse });
-    }
+    // Call manageTokensAndGenerateResponse with a callback that handles each paragraph
+    await manageTokensAndGenerateResponse(openai, userSession, (paragraph) => {
+        if (paragraph.trim() !== '') {
+            chat.sendStateTyping();  // Show typing state for each paragraph
+            client.sendMessage(msg.from, paragraph);
+            userSession.push({ role: "assistant", content: paragraph });
+        }
+    });
 
     // Generate emoji reaction based on the user's message
     const reaction = await generateEmojiReaction(msgBody, openai); 
@@ -124,6 +119,7 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     return userSession;
 }
+
 
 
 
