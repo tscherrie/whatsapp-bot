@@ -42,11 +42,6 @@ export async function manageTokensAndGenerateResponse(openai, userSession) {
 
     enc.free();
 
-    // Create a messageInput for fetchStreamedChatContent
-    const messageInput = {
-        messages: truncatedSession
-    };
-
     let gptResponse = '';
 
     // Call the GPT-4 model using fetchStreamedChatContent

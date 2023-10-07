@@ -298,28 +298,19 @@ async function sendMarvinsMessage(chatId) {
 
     let gptResponse = "";
 
-    // Call the GPT-4 model
-    await new Promise((resolve, reject) => {
-        fetchStreamedChatContent({
-            apiKey: openaiAPIKey,
-            messageInput: messageInput,
-            model: "gpt-4",
-            retryCount: 7,
-            fetchTimeout: 70000,
-            readTimeout: 30000,
-            totalTime: 1200000
-        }, async (content) => {
-            gptResponse += content;
-        }, () => {
-            resolve();
-        }, (error) => {
-            console.error('Error:', error);
-            reject(error);
-        });
-    });
+    // Call the GPT-4 model and manage tokens using the helper function
+    try {
+        const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
+        
+        // Optional: Save the updated user session if needed
+        writeJSONFile(`chats/${chatId}.json`, truncatedSession);
 
-    // Send the message using WhatsApp API
-    client.sendMessage(chatId, gptResponse);
+        // Send the message using WhatsApp API
+        client.sendMessage(chatId, gptResponse);
+    } catch (error) {
+        console.error('Error in sending bots message:', error);
+        // Handle the error appropriately
+    }
 }
 
 
