@@ -18,7 +18,7 @@ function removeEmojis(text) {
 
     // Fetch the voice configuration for the current character and language
     const selectedVoice = characters[characterName].voiceMap[langCode] || characters[characterName].voiceMap[characters[characterName].defaultLanguage];
-
+    console.log("Selected voice:", selectedVoice);
     const payload = {
         input: {
             text: cleanedText
