@@ -176,7 +176,8 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
     try {
         const transcription = await openai.audio.transcriptions.create({
             file: readableStream,
-            model: "whisper-1"
+            model: "whisper-1",
+            response_format: "verbose_json"
         });
         userSession.push({ role: "user", content: transcription.text });
         //console.log("User Session:", userSession); // Debugging line
@@ -188,7 +189,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         userSession.push({ role: "assistant", content: gptResponse });
 
         // Synthesize the GPT response and send voice message
-        await synthesizeAndSend(gptResponse, msg, "Marta");
+        await synthesizeAndSend(gptResponse, msg, "Marta", transcription.language);
 
         // Generate emoji reaction based on the user's message
         const reaction = await generateEmojiReaction(transcription.text, openai);  
