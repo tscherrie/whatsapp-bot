@@ -55,20 +55,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession) {
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            await chat.sendStateTyping();  // Show typing state for each paragraph
             gptResponse += content;
-            const paragraphs = gptResponse.split('\n\n');
-            if (paragraphs.length > 1) {
-                for (let i = 0; i < paragraphs.length - 1; i++) {
-                    if (paragraphs[i].trim() !== '') {
-                        // Send text message
-                        client.sendMessage(msg.from, paragraphs[i]);
-                        userSession.push({ role: "assistant", content: paragraphs[i] });
-                    }
-                }
-                // Keep the last (possibly incomplete) paragraph for the next iteration
-                gptResponse = paragraphs[paragraphs.length - 1];
-            }
         }, () => {
             resolve();
         }, (error) => {
