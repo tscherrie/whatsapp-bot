@@ -9,7 +9,7 @@ import crypto from 'crypto';
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; // Set this to a 32-byte string
 const IV_LENGTH = 16;
 
-function generateTimestamp() {
+export function generateTimestamp() {
     const now = new Date();
     return `[${now.toLocaleDateString()}, ${now.toLocaleTimeString()}]: `;
 }
