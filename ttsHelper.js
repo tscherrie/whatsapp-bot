@@ -1,7 +1,6 @@
 // Import utilities and configurations
 import { voiceApiKey } from './config.js';
 import axios from 'axios';
-import { franc } from 'franc-min';
 import whatsappWebJs from 'whatsapp-web.js';
 import characters from './characterConfig.js';
 
@@ -13,7 +12,6 @@ function removeEmojis(text) {
 
   export async function synthesizeAndSend(gptResponseText, msg, characterName, language) {
     const cleanedText = removeEmojis(gptResponseText);  // Remove emojis
-    //const langCode = franc(cleanedText);
     const langCode = language;
 
     // Fetch the voice configuration for the current character and language

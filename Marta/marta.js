@@ -13,7 +13,6 @@ import qrcode from 'qrcode-terminal';
 import whatsappWebJs from 'whatsapp-web.js';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
-import { franc } from 'franc-min';
 import OpenAI from 'openai';
 import fs from 'fs';
 import os from 'os';
