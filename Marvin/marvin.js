@@ -103,14 +103,14 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     userSession.push({ role: "user", content: formattedMsgBody });
 
     // Call manageTokensAndGenerateResponse with streaming set to true
-    const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-
-    userSession = truncatedSession;
-    client.sendMessage(msg.from, gptResponse);
-    userSession.push({ role: "assistant", content: gptResponse });
-
+    await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+        if (paragraph.trim() !== '') {
+            await chat.sendStateTyping();  // Show typing state for each paragraph
+            client.sendMessage(msg.from, paragraph);
+            userSession.push({ role: "assistant", content: paragraph });
+        }
+    });
   
-
     // Generate emoji reaction based on the user's message
     const reaction = await generateEmojiReaction(msgBody, openai); 
     // React to the user's message with the generated emoji
