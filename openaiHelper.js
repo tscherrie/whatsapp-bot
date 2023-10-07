@@ -36,7 +36,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
     }
 
     enc.free();
-
+    let gptResponse = "";
     await new Promise((resolve, reject) => {
         fetchStreamedChatContent({
             apiKey: openaiAPIKey,
@@ -46,11 +46,18 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             fetchTimeout: 70000,
             readTimeout: 30000,
             totalTime: 1200000
-        }, async (content) => {
-            let paragraphs = content.split('\n\n');
-            for (let paragraph of paragraphs) {
-                if (paragraph.trim() !== '') {
-                    callback(paragraph); // Handle each paragraph
+        }, (content) => {
+            gptResponse += content;
+            let lastNewlineIndex = gptResponse.lastIndexOf('\n\n');
+            if (lastNewlineIndex !== -1) {
+                let completeParagraphs = gptResponse.substring(0, lastNewlineIndex + 2);
+                gptResponse = gptResponse.substring(lastNewlineIndex + 2);
+    
+                let paragraphs = completeParagraphs.split('\n\n');
+                for (let paragraph of paragraphs) {
+                    if (paragraph.trim() !== '') {
+                        callback(paragraph); // Handle each complete paragraph
+                    }
                 }
             }
         }, () => {
@@ -60,6 +67,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             reject(error);
         });
     });
+    
 }
 
 

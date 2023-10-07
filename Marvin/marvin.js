@@ -103,12 +103,11 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     // Call manageTokensAndGenerateResponse with a callback that handles each paragraph
     await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
-        client.sendMessage(msg.from, paragraph);
-        /* if (paragraph.trim() !== '') {
+        if (paragraph.trim() !== '') {
             await chat.sendStateTyping();  // Show typing state for each paragraph
             client.sendMessage(msg.from, paragraph);
             userSession.push({ role: "assistant", content: paragraph });
-        } */
+        }
     });
 
     // Generate emoji reaction based on the user's message
