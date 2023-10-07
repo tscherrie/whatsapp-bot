@@ -133,7 +133,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         //console.log("User Session:", userSession); // Debugging line
 
         // Call manageTokensAndGenerateResponse with streaming
-        await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
+        await manageTokensAndGenerateResponse(openai, userSession, null, chat, async (paragraph) => {
             if (paragraph.trim() !== '') {
                 await chat.sendStateTyping();  // Show typing state for each paragraph
                 client.sendMessage(msg.from, paragraph);
@@ -159,7 +159,7 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
         let gptResponse = "";
         await chat.sendStateRecording();
         // Call manageTokensAndGenerateResponse with streaming
-        await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+        await manageTokensAndGenerateResponse(openai, userSession, null, async (paragraph) => {
             if (paragraph.trim() !== '') {
                 gptResponse += paragraph;
                 userSession.push({ role: "assistant", content: paragraph });
@@ -288,7 +288,7 @@ async function sendMarvinsMessage(chatId) {
     // Call the GPT-4 model and manage tokens using the helper function
     try {
         // Call manageTokensAndGenerateResponse with streaming
-        await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
+        await manageTokensAndGenerateResponse(openai, userSession, null, async (paragraph) => {
             if (paragraph.trim() !== '') {
                 await chat.sendStateTyping();  // Show typing state for each paragraph
                 client.sendMessage(msg.from, paragraph);
