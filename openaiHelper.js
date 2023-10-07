@@ -56,13 +56,16 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             totalTime: 1200000
         }, async (content) => {
             gptResponse += content;
-            const paragraphs = gptResponse.split('\n\n');
-            for (let paragraph of paragraphs) {
-                if (paragraph.trim() !== '') {
-                    callback(paragraph); // Send each paragraph back to the calling code
+            let paragraphs = gptResponse.split('\n\n');
+            for (let i = 0; i < paragraphs.length - 1; i++) {
+                if (paragraphs[i].trim() !== '') {
+                    // Assuming you have some callback function to handle each paragraph
+                    // This should send a message and update the user session
+                    callback(paragraphs[i]);
                 }
             }
-            gptResponse = ''; // Reset gptResponse since we've already handled these paragraphs
+            // Keep the last (possibly incomplete) paragraph for the next iteration
+            gptResponse = paragraphs[paragraphs.length - 1];
         }, () => {
             resolve();
         }, (error) => {
@@ -70,6 +73,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession, callb
             reject(error);
         });
     });
+    
 
     return {
         gptResponse: gptResponse,
