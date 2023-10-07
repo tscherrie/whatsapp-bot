@@ -320,6 +320,7 @@ async function sendMarvinsMessage(chatId) {
 
   
 // The interval function
+
 setInterval(async () => {
     const chatIds = getAllChatIds(); // Get all chat IDs
     

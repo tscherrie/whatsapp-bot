@@ -5,7 +5,7 @@
   "main": "whatsapp.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -19,5 +19,8 @@
     "streamed-chatgpt-api": "^1.0.7",
     "tiktoken": "^1.0.10",
     "whatsapp-web.js": "https://github.com/Julzk/whatsapp-web.js/tarball/jkr_hotfix_8"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
