@@ -2,7 +2,7 @@ import { fetchStreamedChatContent } from 'streamed-chatgpt-api';
 import { encoding_for_model } from "tiktoken";
 import { MAX_TOKENS, openaiAPIKey } from './config.js';
 
-export async function manageTokensAndGenerateResponse(openai, userSession) {
+export async function manageTokensAndGenerateResponse(openai, userSession, streaming = false) {
     // Check if userSession is undefined or null
     if (!userSession) {
         console.error("userSession is undefined.");
