@@ -47,7 +47,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession, chat=
             readTimeout: 30000,
             totalTime: 1200000
         }, async (content) => {
-            if (chat !== null) {
+            if (chat && typeof chat.sendStateTyping === 'function') {
                 await chat.sendStateTyping();  // Show typing state for each paragraph
             }
             gptResponse += content;
