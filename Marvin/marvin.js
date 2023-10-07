@@ -102,9 +102,9 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     userSession.push({ role: "user", content: formattedMsgBody });
 
     // Call manageTokensAndGenerateResponse with a callback that handles each paragraph
-    await manageTokensAndGenerateResponse(openai, userSession, (paragraph) => {
+    await manageTokensAndGenerateResponse(openai, userSession, async (paragraph) => {
         if (paragraph.trim() !== '') {
-            chat.sendStateTyping();  // Show typing state for each paragraph
+            await chat.sendStateTyping();  // Show typing state for each paragraph
             client.sendMessage(msg.from, paragraph);
             userSession.push({ role: "assistant", content: paragraph });
         }
@@ -119,6 +119,7 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     return userSession;
 }
+
 
 
 
