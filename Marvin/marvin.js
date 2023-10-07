@@ -102,21 +102,44 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
 
     userSession.push({ role: "user", content: formattedMsgBody });
 
-    // Call manageTokensAndGenerateResponse function to manage tokens and generate GPT-4 response
-    const { gptResponse, truncatedSession } = await manageTokensAndGenerateResponse(openai, userSession);
-
-    // Update the user session with the received response
-    userSession = truncatedSession;
-    userSession.push({ role: "assistant", content: gptResponse });
-
-    // Iterate through the paragraphs in the GPT response and send each as a separate message
-    const paragraphs = gptResponse.split('\n\n');
-    for (const paragraph of paragraphs) {
-        if (paragraph.trim() !== '') {
+    let gptResponse = "";
+    await new Promise((resolve, reject) => {
+        fetchStreamedChatContent({
+            apiKey: openaiAPIKey,
+            messageInput: userSession,
+            model: "gpt-4",
+            retryCount: 7,
+            fetchTimeout: 70000,
+            readTimeout: 30000,
+            totalTime: 1200000
+        }, async (content) => {
             await chat.sendStateTyping();  // Show typing state for each paragraph
-            client.sendMessage(msg.from, paragraph.trim());
-            userSession.push({ role: "assistant", content: paragraph.trim() });
-        }
+            gptResponse += content;
+            const paragraphs = gptResponse.split('\n\n');
+            if (paragraphs.length > 1) {
+                for (let i = 0; i < paragraphs.length - 1; i++) {
+                    if (paragraphs[i].trim() !== '') {
+                        // Send text message
+                        client.sendMessage(msg.from, paragraphs[i]);
+                        userSession.push({ role: "assistant", content: paragraphs[i] });
+                    }
+                }
+                // Keep the last (possibly incomplete) paragraph for the next iteration
+                gptResponse = paragraphs[paragraphs.length - 1];
+            }
+        }, () => {
+            resolve();
+        }, (error) => {
+            console.error('Error:', error);
+            reject(error);
+        });
+    });
+
+    // Handle any remaining content that may not have ended with '\n\n'
+    if (gptResponse.trim() !== '') {
+        await chat.sendStateTyping();  // Show typing state for remaining content
+        client.sendMessage(msg.from, gptResponse);
+        userSession.push({ role: "assistant", content: gptResponse });
     }
 
     // Generate emoji reaction based on the user's message
@@ -127,7 +150,6 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
     }
 
     return userSession;
-    
 }
 
 
