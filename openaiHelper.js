@@ -53,7 +53,7 @@ export async function manageTokensAndGenerateResponse(openai, userSession) {
     await new Promise((resolve, reject) => {
         fetchStreamedChatContent({
             apiKey: openaiAPIKey,
-            messageInput: messageInput,
+            messageInput: truncatedSession,
             model: "gpt-4",
             retryCount: 7,
             fetchTimeout: 70000,
