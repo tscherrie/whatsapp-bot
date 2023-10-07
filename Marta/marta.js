@@ -1,7 +1,7 @@
 // Import utilities and configurations
 import dotenv from 'dotenv';
 dotenv.config();
-import { readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from '../utils.js';
+import { generateTimestamp, readJSONFile, writeJSONFile, ensureDirectoryExistence, ensureSystemMessage, writeFileFromBuffer, createReadStream, deleteFile, getAllChatIds } from '../utils.js';
 import { SESSION_FILE_PATH, CHATS_DIR, openaiAPIKey } from '../config.js';
 import { manageTokensAndGenerateResponse, generateEmojiReaction } from '../openaiHelper.js';
 import { synthesizeAndSend } from '../ttsHelper.js';
@@ -98,7 +98,7 @@ async function handleTextMessage(userSession, chatFilePath, msgBody, msg, chat) 
         return userSession;
     }
 
-    userSession.push({ role: "user", content: formattedMsgBody });
+    userSession.push({ role: "user", content: generateTimestamp() + formattedMsgBody });
 
     // Call manageTokensAndGenerateResponse with streaming
     await manageTokensAndGenerateResponse(openai, userSession, chat, async (paragraph) => {
@@ -151,7 +151,8 @@ async function handleAudioMessage(userSession, chatFilePath, media, msg, chat) {
             model: "whisper-1",
             response_format: "verbose_json"
         });
-        userSession.push({ role: "user", content: transcription.text });
+        userSession.push({ role: "user", content: generateTimestamp() + transcription.text });
+
         //console.log("User Session:", userSession); // Debugging line
         
         let gptResponse = "";

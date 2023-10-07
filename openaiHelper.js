@@ -55,7 +55,11 @@ export async function manageTokensAndGenerateResponse(openai, userSession, chat=
             if (paragraphs.length > 1) {
                 for (let i = 0; i < paragraphs.length - 1; i++) {
                     if (paragraphs[i].trim() !== '') {
-                        callback(paragraphs[i]); // Handle each paragraph
+                        let messageToSend = paragraphs[i];
+                        if (messageToSend.includes(']: ')) {
+                            messageToSend = messageToSend.split(']: ')[1];
+                        }
+                        callback(messageToSend); // Handle each paragraph
                     }
                 }
                 // Keep the last (possibly incomplete) paragraph for the next iteration
