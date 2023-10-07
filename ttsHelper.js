@@ -11,9 +11,10 @@ const { MessageMedia } = whatsappWebJs;
 function removeEmojis(text) {
   return text.replace(/[^\p{L}\p{N}\p{P}\p{Z}^$\n]/gu, '')}
 
-  export async function synthesizeAndSend(gptResponseText, msg, characterName) {
+  export async function synthesizeAndSend(gptResponseText, msg, characterName, language) {
     const cleanedText = removeEmojis(gptResponseText);  // Remove emojis
-    const langCode = franc(cleanedText);
+    //const langCode = franc(cleanedText);
+    const langCode = language;
 
     // Fetch the voice configuration for the current character and language
     const selectedVoice = characters[characterName].voiceMap[langCode] || characters[characterName].voiceMap[characters[characterName].defaultLanguage];
