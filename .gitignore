@@ -72,3 +72,5 @@ session.json
 .wwebjs_auth
 .wwebjs_cache
 chats/
+config.js
+Marvin/temp_audio.ogg

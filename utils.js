@@ -62,7 +62,12 @@ export function ensureDirectoryExistence(dirPath) {
 
 export function ensureSystemMessage(userSession, systemMessage) {
     if (userSession[0].role !== "system") {
-        userSession.unshift({ role: "system", content: systemMessage });
+        userSession.unshift({
+            role: "system",
+            content: [
+                { type: "text", text: systemMessage }
+            ]
+        });
     }
 }
 
@@ -96,7 +101,7 @@ export function getAllChatIds() {
     return chatIds;
   }
 
-  // Function to delete old chat data (older than 30 days)
+  // Function to delete old chat data (older than 90 days)
   function deleteOldChatData() {
     const files = fs.readdirSync(CHATS_DIR);
     const currentDate = new Date();

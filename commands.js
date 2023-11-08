@@ -19,7 +19,12 @@ export async function updateSystemMessage(userSession, client, msg, command, cha
     }
 
     // Reset userSession and update the system message
-    userSession = [{ role: "system", content: newMessage }];
+    userSession = [{
+        role: "system",
+        content: [
+            { type: "text", text: newMessage }
+        ]
+    }];
 
     // Clear all messages in the chat
     await chat.clearMessages();  // Clear messages when system prompt gets reset
