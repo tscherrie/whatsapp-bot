@@ -58,7 +58,7 @@ export async function manageTokensAndGenerateResponse(userSession, msgText=null,
     }
 
     // Ensure system messages are preserved at the start of the session
-    if (userSession[0]?.role === "system") {
+    if (userSession[0]?.role === "system" && truncatedSession[0]?.role !== "system") {
         truncatedSession.unshift(userSession[0]);
     }
 
@@ -68,7 +68,7 @@ export async function manageTokensAndGenerateResponse(userSession, msgText=null,
         // Call the OpenAI API with the formatted messages
         const response = await openai.chat.completions.create({
             model: "gpt-4-vision-preview",
-            messages: userSession,
+            messages: truncatedSession,
             max_tokens: 4096
         });
         const gptResponse = response.choices[0].message;
@@ -105,4 +105,4 @@ export async function generateEmojiReaction(message, openai) {
     return reaction === "No Emoji" ? null : reaction;
 }
   
-  
+
